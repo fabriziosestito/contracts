@@ -22,7 +22,7 @@ defmodule ProtoTest do
 
     encoded_cloudevent = CloudEvent.encode(cloudevent)
 
-    assert %Test.Event{id: ^event_id} = Proto.from_event(encoded_cloudevent)
+    assert {:ok, %Test.Event{id: ^event_id}} = Proto.from_event(encoded_cloudevent)
   end
 
   test "should encode to the right struct" do
@@ -46,5 +46,35 @@ defmodule ProtoTest do
     encoded_cloudevent = CloudEvent.encode(cloudevent)
 
     assert encoded_cloudevent == Proto.to_event(event, id: cloudevent_id, source: "wandalorian")
+  end
+
+  test "should return error if the event is not wrapped in a CloudEvent" do
+    event = [id: UUID.uuid4()] |> Test.Event.new() |> Test.Event.encode()
+
+    assert {:error, :invalid_envelope} = Proto.from_event(event)
+  end
+
+  test "should return error if the could not be decoded" do
+    event = <<0, 0>>
+
+    assert {:error, :decoding_error} = Proto.from_event(event)
+  end
+
+  test "should return error if the event type is unknown" do
+    cloudevent = %CloudEvent{
+      data:
+        {:proto_data,
+         %Google.Protobuf.Any{
+           __unknown_fields__: [],
+           type_url: "Unknown.Event",
+           value: <<0, 0, 0, 0, 0, 0, 0, 0>>
+         }},
+      id: UUID.uuid4(),
+      source: "wandalorian",
+      spec_version: "1.0",
+      type: "Unknown.Event"
+    }
+
+    assert {:error, :unknown_event} = cloudevent |> CloudEvent.encode() |> Proto.from_event()
   end
 end
