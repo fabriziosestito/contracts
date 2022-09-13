@@ -1,7 +1,9 @@
 defmodule Proto do
   @moduledoc """
-  Documentation for `Proto`.
+  This facade contains functions to eoncode/decode events to/from protobuf
   """
+
+  require Logger
 
   @doc """
   Encode and wrap an event struct to a protobuf CloudEvent.
@@ -21,10 +23,7 @@ defmodule Proto do
         source: source
       )
 
-    cloud_event
-    # Keeping the unknonw fields causes dialyzer to complain
-    |> Map.drop([:__unknown_fields__])
-    |> CloudEvents.CloudEvent.encode()
+    CloudEvents.CloudEvent.encode(cloud_event)
   end
 
   @doc """
@@ -32,8 +31,8 @@ defmodule Proto do
   """
   @spec from_event(binary()) ::
           {:ok, struct()}
-          | {:error, :invalid_cloud_event}
           | {:error, :decoding_error}
+          | {:error, :invalid_envelope}
           | {:error, :event_not_found}
   def from_event(value) do
     try do
@@ -41,11 +40,16 @@ defmodule Proto do
         %{type: type, data: {:proto_data, %Google.Protobuf.Any{value: data}}} ->
           decode(type, data)
 
-        _ ->
-          {:error, :invalid_cloud_event}
+        event ->
+          Logger.error("Invalid cloud event: #{inspect(event)}")
+
+          {:error, :invalid_envelope}
       end
     rescue
-      error -> {:error, :decoding_error}
+      error ->
+        Logger.error("Decoding error: #{inspect(error)}")
+
+        {:error, :decoding_error}
     end
   end
 
@@ -56,7 +60,7 @@ defmodule Proto do
 
       {:ok, module.decode(data)}
     rescue
-      ArgumentError -> {:error, :event_not_found}
+      ArgumentError -> {:error, :unknown_event}
     end
   end
 
