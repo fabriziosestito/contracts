@@ -1,4 +1,4 @@
-defmodule Proto do
+defmodule Trento.Contracts do
   @moduledoc """
   This facade contains functions to eoncode/decode events to/from protobuf
   """

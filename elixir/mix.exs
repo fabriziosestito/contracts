@@ -3,7 +3,7 @@ defmodule Proto.MixProject do
 
   def project do
     [
-      app: :proto,
+      app: :trento_contracts,
       version: "0.1.0",
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
