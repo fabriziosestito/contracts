@@ -85,6 +85,8 @@ jobs:
         run: make elixir-generate
       - name: run credo
         run: cd elixir && mix credo
+      - name: run dyalizer
+        run: cd elixir && mix dialyzer
       - name: Check for uncommited schema changes
         run: |
           git add -N elixir/
