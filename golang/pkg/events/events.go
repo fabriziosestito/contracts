@@ -1,23 +1,52 @@
 package events
 
 import (
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ToEvent(event proto.Message, source string, id string) ([]byte, error) {
+type CloudEventOptions struct {
+	Id     string
+	Source string
+	Time   *timestamppb.Timestamp
+}
+
+func ToEvent(event proto.Message, opts CloudEventOptions) ([]byte, error) {
+	if opts.Id == "" {
+		opts.Id = uuid.New().String()
+	}
+
+	if opts.Source == "" {
+		opts.Source = "trento"
+	}
+
+	if opts.Time == nil {
+		opts.Time = timestamppb.Now()
+	}
+
 	data, err := anypb.New(event)
 	if err != nil {
 		return nil, err
 	}
 
+	attr := CloudEventAttributeValue{
+		Attr: &CloudEventAttributeValue_CeTimestamp{
+			CeTimestamp: opts.Time,
+		},
+	}
+
 	ce := CloudEvent{
-		Id:          id,
-		Source:      source,
+		Id:          opts.Id,
+		Source:      opts.Source,
 		SpecVersion: "1.0",
 		Type:        eventTypeFromProto(event),
 		Data: &CloudEvent_ProtoData{
 			ProtoData: data,
+		},
+		Attributes: map[string]*CloudEventAttributeValue{
+			"time": &attr,
 		},
 	}
 
