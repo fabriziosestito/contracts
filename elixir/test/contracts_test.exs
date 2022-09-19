@@ -28,7 +28,8 @@ defmodule Trento.ContractsTest do
   test "should encode to the right struct" do
     event = Test.Event.new(id: UUID.uuid4())
     cloudevent_id = UUID.uuid4()
-    time = Google.Protobuf.Timestamp.new(seconds: 1000)
+    time = DateTime.utc_now()
+    time_attr = Google.Protobuf.Timestamp.new!(seconds: time |> DateTime.to_unix())
 
     cloudevent = %CloudEvent{
       data:
@@ -43,7 +44,7 @@ defmodule Trento.ContractsTest do
       spec_version: "1.0",
       type: "Test.Event",
       attributes: %{
-        "time" => CloudEvents.CloudEventAttributeValue.new!(attr: {:ce_timestamp, time})
+        "time" => CloudEvents.CloudEventAttributeValue.new!(attr: {:ce_timestamp, time_attr})
       }
     }
 

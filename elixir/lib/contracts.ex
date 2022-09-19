@@ -19,9 +19,10 @@ defmodule Trento.Contracts do
       Keyword.get(
         opts,
         :time,
-        Google.Protobuf.Timestamp.new(seconds: System.system_time(:second))
+        DateTime.utc_now()
       )
 
+    time_attr = Google.Protobuf.Timestamp.new!(seconds: time |> DateTime.to_unix())
     data = Protobuf.Encoder.encode(struct)
 
     cloud_event =
@@ -31,7 +32,7 @@ defmodule Trento.Contracts do
         type: get_type(mod),
         id: id,
         attributes: %{
-          "time" => CloudEvents.CloudEventAttributeValue.new!(attr: {:ce_timestamp, time})
+          "time" => CloudEvents.CloudEventAttributeValue.new!(attr: {:ce_timestamp, time_attr})
         },
         source: source
       )
