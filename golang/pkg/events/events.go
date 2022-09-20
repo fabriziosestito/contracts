@@ -1,29 +1,31 @@
 package events
 
 import (
-	"github.com/google/uuid"
+	"time"
+
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type CloudEventOptions struct {
-	Id     string
-	Source string
-	Time   *timestamppb.Timestamp
+type cloudEventOptions struct {
+	id     string
+	source string
+	time   *time.Time
 }
 
-func ToEvent(event proto.Message, opts CloudEventOptions) ([]byte, error) {
-	if opts.Id == "" {
-		opts.Id = uuid.New().String()
-	}
+type Option = func(fields *cloudEventOptions)
 
-	if opts.Source == "" {
-		opts.Source = "trento"
+func WithTime(time *time.Time) Option {
+	return func(fields *cloudEventOptions) {
+		fields.time = time
 	}
+}
 
-	if opts.Time == nil {
-		opts.Time = timestamppb.Now()
+func ToEvent(event proto.Message, id string, source string, opts ...Option) ([]byte, error) {
+	fields := &cloudEventOptions{id: id, source: source}
+	for _, opt := range opts {
+		opt(fields)
 	}
 
 	data, err := anypb.New(event)
@@ -31,15 +33,20 @@ func ToEvent(event proto.Message, opts CloudEventOptions) ([]byte, error) {
 		return nil, err
 	}
 
+	defaultTime := time.Now()
+	if fields.time == nil {
+		fields.time = &defaultTime
+	}
+
 	attr := CloudEventAttributeValue{
 		Attr: &CloudEventAttributeValue_CeTimestamp{
-			CeTimestamp: opts.Time,
+			CeTimestamp: timestamppb.New(*fields.time),
 		},
 	}
 
 	ce := CloudEvent{
-		Id:          opts.Id,
-		Source:      opts.Source,
+		Id:          fields.id,
+		Source:      fields.source,
 		SpecVersion: "1.0",
 		Type:        eventTypeFromProto(event),
 		Data: &CloudEvent_ProtoData{

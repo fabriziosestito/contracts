@@ -2,6 +2,7 @@ package events_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/trento-project/contracts/pkg/events"
@@ -28,25 +29,22 @@ func TestToEvent(t *testing.T) {
 			},
 		},
 	}
-
-	opts := events.CloudEventOptions{
-		Id:     "id",
-		Source: "wandalorian",
-		Time:   timestamppb.Now(),
-	}
+	id := "id"
+	source := "wandalorian"
+	time := time.Now()
 
 	data, err := anypb.New(&event)
 
 	attr := events.CloudEventAttributeValue{
 		Attr: &events.CloudEventAttributeValue_CeTimestamp{
-			CeTimestamp: opts.Time,
+			CeTimestamp: timestamppb.New(time),
 		},
 	}
 
 	assert.NoError(t, err)
 	ce := events.CloudEvent{
-		Id:          opts.Id,
-		Source:      opts.Source,
+		Id:          id,
+		Source:      source,
 		SpecVersion: "1.0",
 		Type:        string(event.ProtoReflect().Descriptor().FullName()),
 		Data: &events.CloudEvent_ProtoData{
@@ -60,7 +58,7 @@ func TestToEvent(t *testing.T) {
 	rawCe, err := proto.Marshal(&ce)
 	assert.NoError(t, err)
 
-	encodedEvent, err := events.ToEvent(&event, opts)
+	encodedEvent, err := events.ToEvent(&event, id, source, events.WithTime(&time))
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, rawCe, encodedEvent)
