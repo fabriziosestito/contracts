@@ -17,7 +17,7 @@ type cloudEventOptions struct {
 
 type Option = func(fields *cloudEventOptions)
 
-func WithId(id *string) Option {
+func WithID(id *string) Option {
 	return func(fields *cloudEventOptions) {
 		fields.id = id
 	}
