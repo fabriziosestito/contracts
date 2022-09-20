@@ -65,6 +65,29 @@ func TestToEvent(t *testing.T) {
 	assert.EqualValues(t, rawCe, encodedEvent)
 }
 
+func TestToEventWithDefaults(t *testing.T) {
+	event := events.FactsGatheringRequested{
+		ExecutionId: "exe",
+		GroupId:     "group_1",
+		Targets: []*events.FactsGatheringRequestedTarget{
+			{
+				AgentId: "agent_1",
+				FactRequests: []*events.FactRequest{
+					{
+						CheckId:  "check_1",
+						Name:     "test fact",
+						Gatherer: "factone",
+						Argument: "arg",
+					},
+				},
+			},
+		},
+	}
+
+	_, err := events.ToEvent(&event)
+	assert.NoError(t, err)
+}
+
 func TestFromEvent(t *testing.T) {
 	event := events.FactsGatheringRequested{
 		ExecutionId: "exe",
