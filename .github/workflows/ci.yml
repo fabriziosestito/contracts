@@ -52,8 +52,8 @@ jobs:
           mix deps.compile --warnings-as-errors
           mix dialyzer --plt
 
-  static-code-analysis:
-    name: Static Code Analysis
+  static-code-analysis-elixir:
+    name: Static Code Analysis elixir
     needs: [elixir-deps]
     runs-on: ubuntu-20.04
 
@@ -177,7 +177,7 @@ jobs:
         run: git status
 
   test-golang:
-    name: Elixir golang
+    name: Testing golang
     needs: [check-go-contracts]
     runs-on: ubuntu-20.04
 
