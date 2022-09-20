@@ -29,6 +29,7 @@ func TestToEvent(t *testing.T) {
 			},
 		},
 	}
+
 	id := "id"
 	source := "wandalorian"
 	time := time.Now()
@@ -58,7 +59,7 @@ func TestToEvent(t *testing.T) {
 	rawCe, err := proto.Marshal(&ce)
 	assert.NoError(t, err)
 
-	encodedEvent, err := events.ToEvent(&event, id, source, events.WithTime(&time))
+	encodedEvent, err := events.ToEvent(&event, events.WithId(&id), events.WithSource(&source), events.WithTime(&time))
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, rawCe, encodedEvent)

@@ -3,18 +3,31 @@ package events
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type cloudEventOptions struct {
-	id     string
-	source string
+	id     *string
+	source *string
 	time   *time.Time
 }
 
 type Option = func(fields *cloudEventOptions)
+
+func WithId(id *string) Option {
+	return func(fields *cloudEventOptions) {
+		fields.id = id
+	}
+}
+
+func WithSource(source *string) Option {
+	return func(fields *cloudEventOptions) {
+		fields.source = source
+	}
+}
 
 func WithTime(time *time.Time) Option {
 	return func(fields *cloudEventOptions) {
@@ -22,8 +35,8 @@ func WithTime(time *time.Time) Option {
 	}
 }
 
-func ToEvent(event proto.Message, id string, source string, opts ...Option) ([]byte, error) {
-	fields := &cloudEventOptions{id: id, source: source}
+func ToEvent(event proto.Message, opts ...Option) ([]byte, error) {
+	fields := &cloudEventOptions{}
 	for _, opt := range opts {
 		opt(fields)
 	}
@@ -33,9 +46,22 @@ func ToEvent(event proto.Message, id string, source string, opts ...Option) ([]b
 		return nil, err
 	}
 
-	defaultTime := time.Now()
+	var defaultId string
+	if fields.id == nil {
+		defaultId = uuid.New().String()
+		fields.id = &defaultId
+	}
+
+	var defaultTime time.Time
 	if fields.time == nil {
+		defaultTime = time.Now()
 		fields.time = &defaultTime
+	}
+
+	var defaultSource string
+	if fields.source == nil {
+		defaultSource = "trento"
+		fields.source = &defaultSource
 	}
 
 	attr := CloudEventAttributeValue{
@@ -45,8 +71,8 @@ func ToEvent(event proto.Message, id string, source string, opts ...Option) ([]b
 	}
 
 	ce := CloudEvent{
-		Id:          fields.id,
-		Source:      fields.source,
+		Id:          *fields.id,
+		Source:      *fields.source,
 		SpecVersion: "1.0",
 		Type:        eventTypeFromProto(event),
 		Data: &CloudEvent_ProtoData{
