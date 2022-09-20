@@ -176,9 +176,32 @@ jobs:
       - name: Git status
         run: git status
 
-  test:
-    name: Test
-    needs: [elixir-deps, check-go-contracts, check-elixir-contracts]
+  test-golang:
+    name: Elixir golang
+    needs: [check-go-contracts]
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+
+      - name: Run golang tests
+        run: cd golang && go mod download && go test ./...
+
+  test-elixir:
+    name: Elixir test
+    needs: [elixir-deps, check-elixir-contracts]
     runs-on: ubuntu-20.04
 
     steps:
@@ -198,10 +221,6 @@ jobs:
           elixir-version: ${{ env.ELIXIR_VERSION }}
           otp-version: ${{ env.OTP_VERSION }}
 
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.18
-
       - name: Retrieve Cached Dependencies
         uses: actions/cache@v3
         id: mix-cache
@@ -214,6 +233,3 @@ jobs:
 
       - name: Run elixir test
         run: cd elixir && mix test --color --trace --slowest 10
-
-      - name: Run golang tests
-        run: cd golang && go mod download && go test ./...
