@@ -88,14 +88,16 @@ jobs:
 
       - name: Run Credo
         run: cd elixir && mix credo
-      
+
       - name: Check elixir Code Format
-        run: cd elixir && mix format --check-formatted
+        working-directory: elixir
+        run: ls -la && mix format --check-formatted
 
       - name: Run Dialyzer
         run: cd elixir && mix dialyzer
 
   check-elixir-contracts:
+    name: Check elixir contracts
     runs-on: ubuntu-20.04
     steps:
       - name: Cancel Previous Runs
@@ -123,7 +125,7 @@ jobs:
 
       - uses: arduino/setup-protoc@v1
         with:
-          version: '3.20.1'
+          version: "3.20.1"
 
       - name: Install Dependencies
         if: steps.mix-cache.outputs.cache-hit != 'true'
@@ -151,6 +153,7 @@ jobs:
         run: git status
 
   check-go-contracts:
+    name: Check go contracts
     runs-on: ubuntu-20.04
     steps:
       - name: Cancel Previous Runs
@@ -163,9 +166,9 @@ jobs:
           go-version: 1.18
       - uses: arduino/setup-protoc@v1
         with:
-          version: '3.20.1'
+          version: "3.20.1"
       - name: Install protoc gen go
-        run:  go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
       - name: generate contracts
         run: make go-generate
       - name: Check for uncommited schema changes
@@ -177,7 +180,7 @@ jobs:
         run: git status
 
   test-golang:
-    name: Testing golang
+    name: Go test
     needs: [check-go-contracts]
     runs-on: ubuntu-20.04
 
