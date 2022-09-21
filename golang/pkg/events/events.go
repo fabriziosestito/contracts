@@ -10,35 +10,39 @@ import (
 )
 
 type cloudEventOptions struct {
-	id     *string
-	source *string
-	time   *time.Time
+	id     string
+	source string
+	time   time.Time
 }
 
 type Option = func(fields *cloudEventOptions)
 
-func WithID(id *string) Option {
+func WithID(id string) Option {
 	return func(fields *cloudEventOptions) {
 		fields.id = id
 	}
 }
 
-func WithSource(source *string) Option {
+func WithSource(source string) Option {
 	return func(fields *cloudEventOptions) {
 		fields.source = source
 	}
 }
 
-func WithTime(time *time.Time) Option {
+func WithTime(time time.Time) Option {
 	return func(fields *cloudEventOptions) {
 		fields.time = time
 	}
 }
 
 func ToEvent(event proto.Message, opts ...Option) ([]byte, error) {
-	fields := &cloudEventOptions{}
+	options := &cloudEventOptions{
+		id:     uuid.NewString(),
+		source: "https://github.com/trento-project",
+		time:   time.Now(),
+	}
 	for _, opt := range opts {
-		opt(fields)
+		opt(options)
 	}
 
 	data, err := anypb.New(event)
@@ -46,33 +50,15 @@ func ToEvent(event proto.Message, opts ...Option) ([]byte, error) {
 		return nil, err
 	}
 
-	var defaultId string
-	if fields.id == nil {
-		defaultId = uuid.New().String()
-		fields.id = &defaultId
-	}
-
-	var defaultTime time.Time
-	if fields.time == nil {
-		defaultTime = time.Now()
-		fields.time = &defaultTime
-	}
-
-	var defaultSource string
-	if fields.source == nil {
-		defaultSource = "trento"
-		fields.source = &defaultSource
-	}
-
 	attr := CloudEventAttributeValue{
 		Attr: &CloudEventAttributeValue_CeTimestamp{
-			CeTimestamp: timestamppb.New(*fields.time),
+			CeTimestamp: timestamppb.New(options.time),
 		},
 	}
 
 	ce := CloudEvent{
-		Id:          *fields.id,
-		Source:      *fields.source,
+		Id:          options.id,
+		Source:      options.source,
 		SpecVersion: "1.0",
 		Type:        eventTypeFromProto(event),
 		Data: &CloudEvent_ProtoData{
