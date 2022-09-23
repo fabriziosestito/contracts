@@ -1,1 +1,1 @@
-# Trento Contracts
+# Moved to https://github.com/trento-project/contracts
